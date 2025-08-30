@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>College Campus Map</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css"/>
+
+  <style>
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+
+  <script>
+    // Initialize the map
+    var map = L.map('map').setView([18.6199, 73.7480], 17);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Add markers for buildings
+    var buildings = [
+      ["A1 Building (UG Library)", 18.62007177855601, 73.74739974719665],
+      ["A Building", 18.619938718717, 73.74807897711241],
+      ["B Building", 18.619875515254222, 73.74893196353109],
+      ["Electrical + A&R Dept", 18.61975243476189, 73.74944972277972],
+      ["Mechanical Dept", 18.619799005766748, 73.74981654204184],
+      ["Hostel + Food Court", 18.619820628016896, 73.75007103387564],
+      ["Pharmacy Dept", 18.618721216329682, 73.74935319139928],
+      ["Management Institute", 18.618356961873754, 73.74935845674374],
+      ["College Bank", 18.617485409231325, 73.74923033327195]
+    ];
+
+    var markers = [];
+    buildings.forEach(function(b) {
+      var marker = L.marker([b[1], b[2]]).addTo(map).bindPopup(b[0]);
+      markers.push(marker);
+    });
+
+    // Routing control (added later when a destination is clicked)
+    var control = null;
+
+    // Get user's live location
+    map.locate({setView: true, maxZoom: 17, watch: true});
+
+    var userMarker = null;
+
+    function onLocationFound(e) {
+      var radius = e.accuracy / 2;
+
+      if (!userMarker) {
+        userMarker = L.marker(e.latlng).addTo(map).bindPopup("You are here").openPopup();
+      } else {
+        userMarker.setLatLng(e.latlng);
+      }
+
+      // When user clicks a building marker, draw route
+      markers.forEach(function(m) {
+        m.on("click", function() {
+          if (control) {
+            map.removeControl(control);
+          }
+          control = L.Routing.control({
+            waypoints: [
+              L.latLng(e.latlng.lat, e.latlng.lng),
+              m.getLatLng()
+            ],
+            routeWhileDragging: false
+          }).addTo(map);
+        });
+      });
+    }
+
+    function onLocationError(e) {
+      alert(e.message);
+    }
+
+    map.on('locationfound', onLocationFound);
+    map.on('locationerror', onLocationError);
+  </script>
+</body>
+</html>
